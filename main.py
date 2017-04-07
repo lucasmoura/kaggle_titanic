@@ -9,8 +9,10 @@ TEST_FILE = 'test.csv'
 def main():
     train_path = DATA_PATH + TRAIN_FILE
     test_path = DATA_PATH + TEST_FILE
+    exclude_columns = ['Ticket', 'Cabin']
 
-    df.format_data(train_path, test_path)
+    train_data, test_data = df.format_data(
+        train_path, test_path, exclude_columns)
 
 
 if __name__ == '__main__':
