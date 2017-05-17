@@ -13,6 +13,13 @@ def drop_columns(dataframe, exclude_columns):
     return dataframe.drop(exclude_columns, axis=1)
 
 
+def exclude_columns_from_data(dataframe, exclude_columns):
+    if not exclude_columns:
+        return dataframe
+
+    return drop_columns(dataframe, exclude_columns)
+
+
 def add_title_column(dataframe):
     dataframe['Title'] = dataframe.Name.str.extract(' (\w+)\.', expand=False)
     return dataframe
@@ -77,13 +84,6 @@ def format_age_column(dataframe):
     apply_feature_normalization(dataframe, 'Age')
 
 
-def exclude_columns_from_data(dataframe, exclude_columns):
-    if not exclude_columns:
-        return dataframe
-
-    return drop_columns(dataframe, exclude_columns)
-
-
 def format_column_values(dataframe):
     format_sex_column(dataframe)
     format_embarked_column(dataframe)
@@ -94,6 +94,23 @@ def format_column_values(dataframe):
 def create_create_new_columns(dataframe):
     dataframe = add_title_column(dataframe)
     return dataframe
+
+
+def print_overall_info(dataframe):
+    print(dataframe.info(memory_usage=False))
+    print()
+
+
+def print_data_information(dataframe, name):
+    print('{} data shape: {}'.format(name, dataframe.shape))
+
+    for value in dataframe.columns.values:
+        nan_count = dataframe[value].isnull().sum()
+        if nan_count:
+            print('Number of missing values for {}: {}'.format(
+                value, nan_count))
+
+    print()
 
 
 """
@@ -121,13 +138,15 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     test_data = create_dataframe(test_path)
 
     if verbose:
-        print('Train data shape: {}'.format(train_data.shape))
-        print('Test data shape: {}'.format(test_data.shape))
+        print_overall_info(train_data)
+        print_data_information(train_data, 'Train')
+        print_data_information(test_data, 'Test')
 
     train_data_len = train_data.shape[0]
     combined_data = combine_data(train_data, test_data)
 
     format_column_values(combined_data)
+    fill_missing_values(combined_data)
     # combined_data = create_create_new_columns(combined_data)
     combined_data = exclude_columns_from_data(combined_data, exclude_columns)
 
@@ -135,7 +154,23 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     train_data = drop_columns(train_data, ['PassengerId'])
 
     if verbose:
-        print('\nTrain data new shape: {}'.format(train_data.shape))
-        print('Test data new shape: {}'.format(test_data.shape))
+        print_data_information(train_data, 'Train')
+        print_data_information(test_data, 'Test')
 
     return train_data, test_data
+
+
+"""
+    This method will be used to format the training data. Every passenger data
+    will be formatted to the following pattern:
+
+    (x, y)
+
+    where x will be the passenger's features and y will if that passsenger
+    survived or not.
+"""
+def format_training_data(train_data):
+    y = train_data.Survived
+    train_data = drop_columns(train_data, ['Survived'])
+
+    return (train_data, y)
