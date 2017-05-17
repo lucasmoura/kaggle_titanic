@@ -147,6 +147,7 @@ def create_create_new_columns(dataframe):
 
 
 def print_overall_info(dataframe):
+    print('Displaying general info...')
     print(dataframe.info(memory_usage=False))
     print()
 
@@ -193,7 +194,7 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     test_data = create_dataframe(test_path)
 
     if verbose:
-        print('Before data formatting...')
+        print('Before data formatting...\n')
         print_overall_info(train_data)
         print_data_information(train_data, 'Train')
         print_data_information(test_data, 'Test')
@@ -210,7 +211,7 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     train_data = drop_columns(train_data, ['PassengerId'])
 
     if verbose:
-        print('After data formatting...')
+        print('After data formatting...\n')
         print_data_information(train_data, 'Train')
         print_data_information(test_data, 'Test')
 
@@ -241,11 +242,17 @@ def format_training_data(train_data):
     on the parameter size, which should the proportion of training data that
     will be transformed into validation data.
 """
-def create_validation_data(train_data, size=0.2):
+def create_validation_data(train_data, size=0.2, verbose=False):
     random.shuffle(train_data)
     num_validation = int(len(train_data) * size)
 
     validation_data = train_data[:num_validation]
     train_data = train_data[num_validation:]
+
+    if verbose:
+        print('Size of training set after split: {}'.format(
+            len(train_data)))
+        print('Size of validation set after split: {}'.format(
+            len(validation_data)))
 
     return (train_data, validation_data)

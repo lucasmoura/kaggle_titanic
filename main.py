@@ -1,4 +1,5 @@
 import data_formatter as df
+import neural_network as nn
 
 
 DATA_PATH = 'data/'
@@ -16,8 +17,9 @@ def main():
         train_path, test_path, exclude_columns, verbose=True)
 
     train_data = df.format_training_data(train_data)
-
-    train_data, validation_data = df.create_validation_data(train_data)
+    print('Creating validation data...')
+    train_data, validation_data = df.create_validation_data(
+        train_data, verbose=True)
 
 
 if __name__ == '__main__':
