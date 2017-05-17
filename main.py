@@ -17,6 +17,8 @@ def main():
 
     train_data = df.format_training_data(train_data)
 
+    train_data, validation_data = df.create_validation_data(train_data)
+
 
 if __name__ == '__main__':
     main()

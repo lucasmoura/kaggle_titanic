@@ -1,3 +1,4 @@
+import random
 import pandas
 import numpy as np
 
@@ -232,4 +233,19 @@ def format_training_data(train_data):
 
     train_data = [np.reshape(x, (num_features, 1)) for x in train_data]
 
-    return zip(train_data, y.as_matrix())
+    return list(zip(train_data, y.as_matrix()))
+
+
+"""
+    This method will split the train data into train and validation data based
+    on the parameter size, which should the proportion of training data that
+    will be transformed into validation data.
+"""
+def create_validation_data(train_data, size=0.2):
+    random.shuffle(train_data)
+    num_validation = int(len(train_data) * size)
+
+    validation_data = train_data[:num_validation]
+    train_data = train_data[num_validation:]
+
+    return (train_data, validation_data)
