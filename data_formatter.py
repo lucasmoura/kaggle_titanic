@@ -114,13 +114,14 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     combined_data = combine_data(train_data, test_data)
 
     format_column_values(combined_data)
-    combined_data = create_create_new_columns(combined_data)
+    # combined_data = create_create_new_columns(combined_data)
     combined_data = exclude_columns_from_data(combined_data, exclude_columns)
 
     train_data, test_data = split_dataframe(combined_data, train_data_len)
+    train_data = drop_columns(train_data, ['PassengerId'])
 
     if verbose:
-        print('\nTrain data shape: {}'.format(train_data.shape))
-        print('Test data shape: {}'.format(test_data.shape))
+        print('\nTrain data new shape: {}'.format(train_data.shape))
+        print('Test data new shape: {}'.format(test_data.shape))
 
     return train_data, test_data
