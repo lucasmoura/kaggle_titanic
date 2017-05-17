@@ -1,4 +1,5 @@
 import pandas
+import numpy as np
 
 
 def create_dataframe(data_path):
@@ -91,6 +92,45 @@ def format_column_values(dataframe):
     format_age_column(dataframe)
 
 
+"""
+    This function is used to guess ages for passengers with missing ages.
+    To guess an age, we look at two features, the Pclass and Sex. Every
+    combination of Pclass and Sex will have a fit random age to replace a
+    missing one.
+"""
+def fill_missing_ages(dataframe, verbose=False):
+    guess_ages = np.zeros((2, 3))
+
+    print('Filling age missing values...')
+
+    for i in range(2):  # Sex
+        for j in range(3):  # Pclass
+            sex = 'female' if i == 0 else 'male'
+            guess_age = dataframe[((dataframe['Sex'] == sex) &
+                                   (dataframe['Pclass'] == j + 1))]
+            guess_age = guess_age['Age'].dropna()
+
+            guess_ages[i, j] = guess_age.mean()
+
+            if verbose:
+                print('Guessed age for Sex {} and Pclass {}: {}'.format(
+                    i, j+1, int(guess_ages[i, j])))
+
+    print()
+    for i in range(2):
+        for j in range(3):
+            sex = 'female' if i == 0 else 'male'
+            dataframe.loc[
+                ((dataframe.Age.isnull()) & (dataframe.Sex == sex) &
+                 (dataframe.Pclass == j + 1)), 'Age'] = guess_ages[i, j]
+
+    dataframe['Age'] = dataframe['Age'].astype(int)
+
+
+def fill_missing_values(dataframe, verbose):
+    fill_missing_ages(dataframe, verbose)
+
+
 def create_create_new_columns(dataframe):
     dataframe = add_title_column(dataframe)
     return dataframe
@@ -138,6 +178,7 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     test_data = create_dataframe(test_path)
 
     if verbose:
+        print('Before data formatting...')
         print_overall_info(train_data)
         print_data_information(train_data, 'Train')
         print_data_information(test_data, 'Test')
@@ -145,8 +186,8 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     train_data_len = train_data.shape[0]
     combined_data = combine_data(train_data, test_data)
 
+    fill_missing_values(combined_data, verbose)
     format_column_values(combined_data)
-    fill_missing_values(combined_data)
     # combined_data = create_create_new_columns(combined_data)
     combined_data = exclude_columns_from_data(combined_data, exclude_columns)
 
@@ -154,6 +195,7 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     train_data = drop_columns(train_data, ['PassengerId'])
 
     if verbose:
+        print('After data formatting...')
         print_data_information(train_data, 'Train')
         print_data_information(test_data, 'Test')
 
