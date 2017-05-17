@@ -127,8 +127,17 @@ def fill_missing_ages(dataframe, verbose=False):
     dataframe['Age'] = dataframe['Age'].astype(int)
 
 
+"""
+    Fill the missing Embarked values with the most frequent embarked location.
+"""
+def fill_missing_embarked(dataframe, verbose=False):
+    most_frequent_embarked = dataframe.Embarked.dropna().mode()[0]
+    dataframe.Embarked = dataframe.Embarked.fillna(most_frequent_embarked)
+
+
 def fill_missing_values(dataframe, verbose):
     fill_missing_ages(dataframe, verbose)
+    fill_missing_embarked(dataframe, verbose)
 
 
 def create_create_new_columns(dataframe):
@@ -144,11 +153,16 @@ def print_overall_info(dataframe):
 def print_data_information(dataframe, name):
     print('{} data shape: {}'.format(name, dataframe.shape))
 
+    missing_values = False
     for value in dataframe.columns.values:
         nan_count = dataframe[value].isnull().sum()
         if nan_count:
+            missing_values = True
             print('Number of missing values for {}: {}'.format(
                 value, nan_count))
+
+    if not missing_values:
+        print('No missing values for {} data'.format(name))
 
     print()
 
