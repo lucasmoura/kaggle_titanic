@@ -15,6 +15,8 @@ def main():
     train_data, test_data = df.format_data(
         train_path, test_path, exclude_columns, verbose=True)
 
+    train_data = df.format_training_data(train_data)
+
 
 if __name__ == '__main__':
     main()

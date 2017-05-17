@@ -227,6 +227,9 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
 """
 def format_training_data(train_data):
     y = train_data.Survived
-    train_data = drop_columns(train_data, ['Survived'])
+    train_data = drop_columns(train_data, ['Survived']).as_matrix()
+    num_features = train_data.shape[1]
 
-    return (train_data, y)
+    train_data = [np.reshape(x, (num_features, 1)) for x in train_data]
+
+    return zip(train_data, y.as_matrix())
