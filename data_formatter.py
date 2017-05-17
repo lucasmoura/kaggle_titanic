@@ -51,6 +51,14 @@ def format_embarked_column(dataframe):
     dataframe.loc[dataframe.Embarked == 'S', 'Embarked'] = 2
 
 
+def apply_feature_normalization(dataframe, column_name):
+    mean = dataframe[column_name].mean()
+    std = dataframe[column_name].std()
+
+    dataframe[column_name] = dataframe[column_name].apply(
+        lambda x: (x - mean) / std)
+
+
 """
     The Fare column has the amount of money a passenger paid for a ticket. It
     will be better to normalize such a feature, meaning that for every column
@@ -58,10 +66,15 @@ def format_embarked_column(dataframe):
     deviation.
 """
 def format_fare_column(dataframe):
-    mean = dataframe.Fare.mean()
-    std = dataframe.Fare.std()
+    apply_feature_normalization(dataframe, 'Fare')
 
-    dataframe.Fare = dataframe.Fare.apply(lambda x: (x - mean) / std)
+
+"""
+    The Age column has the real age values of the passengers. We will apply the
+    same feature normalization as the one applied for the Fare column.
+"""
+def format_age_column(dataframe):
+    apply_feature_normalization(dataframe, 'Age')
 
 
 def exclude_columns_from_data(dataframe, exclude_columns):
@@ -75,6 +88,7 @@ def format_column_values(dataframe):
     format_sex_column(dataframe)
     format_embarked_column(dataframe)
     format_fare_column(dataframe)
+    format_age_column(dataframe)
 
 
 def create_create_new_columns(dataframe):
