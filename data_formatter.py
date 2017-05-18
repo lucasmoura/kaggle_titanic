@@ -31,20 +31,21 @@ def split_dataframe(dataframe, split_dataframe_len):
     return dataframe[:split_dataframe_len], dataframe[split_dataframe_len:]
 
 
-"""
-    The Sex column in the dataframe has the as values the actual gender name of
-    a passenger. In order to use that information, it will be required to
-    change these values to numerical ones:
+def format_sex_column(dataframe):
+    """
+    The Sex column in the dataframe has the as values the actual gender
+    name of a passenger. In order to use that information, it will be
+    required to change these values to numerical ones:
 
     0 = female
     1 = male
-"""
-def format_sex_column(dataframe):
+    """
     dataframe.loc[dataframe.Sex == 'female', 'Sex'] = 0
     dataframe.loc[dataframe.Sex == 'male', 'Sex'] = 1
 
 
-"""
+def format_embarked_column(dataframe):
+    """
     The Embarked column in the dataframe has three possible values for where
     the passenger has embarked. This locations are represented by a single
     uppercase char caracter. This function will replace that char
@@ -53,8 +54,7 @@ def format_sex_column(dataframe):
     C = 0
     Q = 1
     S = 2
-"""
-def format_embarked_column(dataframe):
+    """
     dataframe.loc[dataframe.Embarked == 'C', 'Embarked'] = 0
     dataframe.loc[dataframe.Embarked == 'Q', 'Embarked'] = 1
     dataframe.loc[dataframe.Embarked == 'S', 'Embarked'] = 2
@@ -68,21 +68,21 @@ def apply_feature_normalization(dataframe, column_name):
         lambda x: (x - mean) / std)
 
 
-"""
+def format_fare_column(dataframe):
+    """
     The Fare column has the amount of money a passenger paid for a ticket. It
     will be better to normalize such a feature, meaning that for every column
     value, we will subtract the value from the mean and divide by the standard
     deviation.
-"""
-def format_fare_column(dataframe):
+    """
     apply_feature_normalization(dataframe, 'Fare')
 
 
-"""
+def format_age_column(dataframe):
+    """
     The Age column has the real age values of the passengers. We will apply the
     same feature normalization as the one applied for the Fare column.
-"""
-def format_age_column(dataframe):
+    """
     apply_feature_normalization(dataframe, 'Age')
 
 
@@ -93,13 +93,13 @@ def format_column_values(dataframe):
     format_age_column(dataframe)
 
 
-"""
+def fill_missing_ages(dataframe, verbose=False):
+    """
     This function is used to guess ages for passengers with missing ages.
     To guess an age, we look at two features, the Pclass and Sex. Every
     combination of Pclass and Sex will have a fit random age to replace a
     missing one.
-"""
-def fill_missing_ages(dataframe, verbose=False):
+    """
     guess_ages = np.zeros((2, 3))
 
     print('Filling age missing values...')
@@ -128,10 +128,10 @@ def fill_missing_ages(dataframe, verbose=False):
     dataframe['Age'] = dataframe['Age'].astype(int)
 
 
-"""
-    Fill the missing Embarked values with the most frequent embarked location.
-"""
 def fill_missing_embarked(dataframe, verbose=False):
+    """
+    Fill the missing Embarked values with the most frequent embarked location.
+    """
     most_frequent_embarked = dataframe.Embarked.dropna().mode()[0]
     dataframe.Embarked = dataframe.Embarked.fillna(most_frequent_embarked)
 
@@ -169,7 +169,8 @@ def print_data_information(dataframe, name):
     print()
 
 
-"""
+def format_data(train_path, test_path, exclude_columns=None, verbose=False):
+    """
     Every row on training data:
 
     * passengerId: The identifier of a given passenger;
@@ -188,8 +189,7 @@ def print_data_information(dataframe, name):
 
     This function will them be used to format the data for it to be fit to use
     on a neural network.
-"""
-def format_data(train_path, test_path, exclude_columns=None, verbose=False):
+    """
     train_data = create_dataframe(train_path)
     test_data = create_dataframe(test_path)
 
@@ -218,7 +218,8 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     return train_data, test_data
 
 
-"""
+def format_training_data(train_data):
+    """
     This method will be used to format the training data. Every passenger data
     will be formatted to the following pattern:
 
@@ -226,8 +227,7 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
 
     where x will be the passenger's features and y will if that passsenger
     survived or not.
-"""
-def format_training_data(train_data):
+    """
     y = train_data.Survived
     train_data = drop_columns(train_data, ['Survived']).as_matrix()
     num_features = train_data.shape[1]
@@ -237,12 +237,12 @@ def format_training_data(train_data):
     return list(zip(train_data, y.as_matrix()))
 
 
-"""
+def create_validation_data(train_data, size=0.2, verbose=False):
+    """
     This method will split the train data into train and validation data based
     on the parameter size, which should the proportion of training data that
     will be transformed into validation data.
-"""
-def create_validation_data(train_data, size=0.2, verbose=False):
+    """
     random.shuffle(train_data)
     num_validation = int(len(train_data) * size)
 
