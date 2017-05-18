@@ -21,6 +21,12 @@ def main():
     train_data, validation_data = df.create_validation_data(
         train_data, verbose=True)
 
+    layers = [8, 5, 1]
+
+    network = nn.NeuralNetwork(layers, verbose=True)
+
+    network.sgd()
+
 
 if __name__ == '__main__':
     main()
