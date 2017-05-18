@@ -1,4 +1,6 @@
+import random
 import tensorflow as tf
+
 from math import sqrt
 
 
@@ -62,11 +64,34 @@ class NeuralNetwork:
                 self.sess.run(weight)))
         print()
 
-    def sgd(self):
+    def initialize_weights_and_biases(self):
         init = tf.global_variables_initializer()
         self.sess.run(init)
+
+    def create_placeholders(self, train_data, batch_size):
+        num_features = train_data.shape[1]
+        self.x = tf.placeholder(
+            tf.float64, shape=[batch_size, num_features])
+        self.y = tf.placeholder(
+            tf.float64, shape=[batch_size, 1])
+
+    def create_batches(self, train_data, batch_size):
+        random.shuffle(train_data)
+        batches = [train_data[offset:offset+batch_size]
+                   for offset in range(0, len(train_data), batch_size)]
+        return batches
+
+    def sgd(self, *, train_data, batch_size, epochs):
+        self.initialize_weights_and_biases()
+        self.create_placeholders()
 
         if self.verbose:
             print('\nDisplaying biases and weights before sgd...')
             self.print_biases()
             self.print_weights()
+
+        for _ in range(epochs):
+            batches = self.create_batches(train_data, batch_size)
+
+            if self.verbose:
+                print('Num of batches: {}'.format(len(batches)))
