@@ -21,11 +21,19 @@ def main():
     train_data, validation_data = df.create_validation_data(
         train_data, verbose=True)
 
-    layers = [8, 5, 1]
+    layers = [7, 5, 1]
 
     network = nn.NeuralNetwork(layers, verbose=True)
+    batch_size = 50
+    epochs = 20
+    learning_rate = 0.3
 
-    network.sgd()
+    network.sgd(
+        train_data=train_data,
+        batch_size=batch_size,
+        epochs=epochs,
+        learning_rate=learning_rate,
+        validation_data=validation_data)
 
 
 if __name__ == '__main__':

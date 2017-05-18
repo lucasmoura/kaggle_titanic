@@ -1,5 +1,7 @@
 import random
+
 import tensorflow as tf
+import numpy as np
 
 from math import sqrt
 
@@ -18,6 +20,7 @@ class NeuralNetwork:
 
         self.sess = tf.Session()
         self.verbose = verbose
+        self.layers = layers
 
         self.init_biases(layers)
         self.init_weights(layers)
@@ -68,12 +71,13 @@ class NeuralNetwork:
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
-    def create_placeholders(self, train_data, batch_size):
-        num_features = train_data.shape[1]
-        self.x = tf.placeholder(
-            tf.float64, shape=[batch_size, num_features])
-        self.y = tf.placeholder(
-            tf.float64, shape=[batch_size, 1])
+    def create_placeholders(self, batch_size, num_features):
+        x = tf.placeholder(
+            tf.float32, shape=None)
+        y = tf.placeholder(
+            tf.float32, shape=None)
+
+        return (x, y)
 
     def create_batches(self, train_data, batch_size):
         random.shuffle(train_data)
@@ -81,11 +85,56 @@ class NeuralNetwork:
                    for offset in range(0, len(train_data), batch_size)]
         return batches
 
-    def sgd(self, *, train_data, batch_size, epochs):
+    def unify_batch(self, batch):
+        data_batch, prediction_batch = batch[0]
+
+        for data, prediction in batch[1:]:
+            data_batch = np.concatenate((data_batch, data), axis=1)
+            prediction_batch = np.concatenate(
+                (prediction_batch, prediction), axis=1)
+
+        return(data_batch, prediction_batch.T)
+
+    def feedforward(self, input_data):
+        a0 = input_data
+        z1 = tf.matmul(tf.transpose(self.weights[0]), a0)
+        a1 = tf.sigmoid(z1)
+
+        z2 = tf.matmul(tf.transpose(self.weights[1]), a1)
+        a2 = tf.sigmoid(z2)
+
+        return tf.transpose(a2)
+
+    def accuracy(self, validation_data):
+        total_data = len(validation_data)
+        data, prediction = self.unify_batch(validation_data)
+
+        x = tf.placeholder(tf.float32)
+        result = self.feedforward(x)
+
+        nn_prediction = self.sess.run(result, {x: data})
+        nn_prediction = nn_prediction >= 0.5
+        prediction = prediction == 1
+
+        count = 0
+
+        for actual, real in zip(nn_prediction, prediction):
+            if actual == real:
+                count += 1
+
+        return count / total_data
+
+    def sgd(self, *, train_data, batch_size, epochs, learning_rate,
+            validation_data):
         self.initialize_weights_and_biases()
-        self.create_placeholders()
+        num_features = train_data[0][0].shape[0]
+        x, y = self.create_placeholders(batch_size, num_features)
 
         if self.verbose:
+            print('Stochastic gradient descent will be performed with:')
+            print('Num training_data: {}'.format(len(train_data)))
+            print('Num epochs: {}'.format(epochs))
+            print('Batch size: {}'.format(batch_size))
             print('\nDisplaying biases and weights before sgd...')
             self.print_biases()
             self.print_weights()
@@ -95,3 +144,20 @@ class NeuralNetwork:
 
             if self.verbose:
                 print('Num of batches: {}'.format(len(batches)))
+
+            for batch in batches:
+                data_batch, prediction_batch = self.unify_batch(batch)
+
+                output = self.feedforward(x)
+                loss = tf.nn.sigmoid_cross_entropy_with_logits(
+                    logits=output,
+                    labels=y)
+                train_step = tf.train.GradientDescentOptimizer(
+                    learning_rate).minimize(loss)
+
+                self.sess.run(
+                    train_step,
+                    feed_dict={x: data_batch, y: prediction_batch})
+
+            if validation_data:
+                print('Accuracy: {}'.format(self.accuracy(validation_data)))
