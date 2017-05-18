@@ -228,13 +228,14 @@ def format_training_data(train_data):
     where x will be the passenger's features and y will if that passsenger
     survived or not.
     """
-    y = train_data.Survived
+    y = train_data.Survived.as_matrix()
     train_data = drop_columns(train_data, ['Survived']).as_matrix()
     num_features = train_data.shape[1]
 
     train_data = [np.reshape(x, (num_features, 1)) for x in train_data]
+    y = [np.array(pred).reshape((1, 1)) for pred in y]
 
-    return list(zip(train_data, y.as_matrix()))
+    return list(zip(train_data, y))
 
 
 def create_validation_data(train_data, size=0.2, verbose=False):
