@@ -16,7 +16,9 @@ class NeuralNetwork:
 
         self.sess = tf.Session()
         self.verbose = verbose
+
         self.init_biases(layers)
+        self.init_weights(layers)
 
     def init_biases(self, layers):
         self.biases = []
@@ -32,15 +34,39 @@ class NeuralNetwork:
             self.biases.append(bias)
             input_layer = layer
 
+    def init_weights(self, layers):
+        self.weights = []
+        index = 1
+
+        for s1, s2 in zip(layers[:-1], layers[1:]):
+            weight = tf.Variable(
+                tf.random_normal(
+                    shape=[s1, s2],
+                    mean=0,
+                    stddev=(1 / sqrt(s1))),
+                name='w{}'.format(index))
+            self.weights.append(weight)
+            index += 1
+
     def print_biases(self):
         for bias in self.biases:
-            print('Bias with shape: {} and values: {}'.format(
+            print('Bias with shape: {} and values:\n {}'.format(
                 self.sess.run(tf.shape(bias)),
                 self.sess.run(bias)))
+        print()
+
+    def print_weights(self):
+        for weight in self.weights:
+            print('Weight with shape: {} and values:\n {}'.format(
+                self.sess.run(tf.shape(weight)),
+                self.sess.run(weight)))
+        print()
 
     def sgd(self):
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
         if self.verbose:
+            print('\nDisplaying biases and weights before sgd...')
             self.print_biases()
+            self.print_weights()
