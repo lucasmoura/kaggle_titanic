@@ -105,30 +105,33 @@ class NeuralNetwork:
 
         return tf.transpose(a2)
 
-    def accuracy(self, validation_data):
-        total_data = len(validation_data)
-        data, prediction = self.unify_batch(validation_data)
-
+    def accuracy(self, data, prediction):
         x = tf.placeholder(tf.float32)
         result = self.feedforward(x)
 
         nn_prediction = self.sess.run(result, {x: data})
         nn_prediction = nn_prediction >= 0.5
-        prediction = prediction == 1
 
-        count = 0
-
-        for actual, real in zip(nn_prediction, prediction):
-            if actual == real:
-                count += 1
-
-        return count / total_data
+        a = tf.placeholder(tf.bool)
+        b = tf.placeholder(tf.bool)
+        accuracy_metric = tf.contrib.metrics.accuracy(a, b)
+        return self.sess.run(accuracy_metric,
+                             {a: nn_prediction, b: prediction})
 
     def sgd(self, *, train_data, batch_size, epochs, learning_rate,
             validation_data):
         self.initialize_weights_and_biases()
         num_features = train_data[0][0].shape[0]
         x, y = self.create_placeholders(batch_size, num_features)
+
+        training_accuracies, validation_accuracies = [], []
+        loss_values = []
+        tdf, pdf = self.unify_batch(train_data)
+
+        if validation_data:
+            data, prediction = self.unify_batch(validation_data)
+            prediction = prediction == 1
+            pdf_bool = pdf == 1
 
         if self.verbose:
             print('Stochastic gradient descent will be performed with:')
@@ -139,19 +142,17 @@ class NeuralNetwork:
             self.print_biases()
             self.print_weights()
 
-        for _ in range(epochs):
+        for epoch in range(epochs):
             batches = self.create_batches(train_data, batch_size)
-
-            if self.verbose:
-                print('Num of batches: {}'.format(len(batches)))
 
             for batch in batches:
                 data_batch, prediction_batch = self.unify_batch(batch)
 
                 output = self.feedforward(x)
-                loss = tf.nn.sigmoid_cross_entropy_with_logits(
-                    logits=output,
-                    labels=y)
+                loss = tf.reduce_mean(
+                    tf.nn.sigmoid_cross_entropy_with_logits(
+                        logits=output,
+                        labels=y))
                 train_step = tf.train.GradientDescentOptimizer(
                     learning_rate).minimize(loss)
 
@@ -159,5 +160,22 @@ class NeuralNetwork:
                     train_step,
                     feed_dict={x: data_batch, y: prediction_batch})
 
+            loss_value = self.sess.run(loss, feed_dict={x: tdf, y: pdf})
+            loss_values.append(loss_value)
+
             if validation_data:
-                print('Accuracy: {}'.format(self.accuracy(validation_data)))
+                training_accuracy = self.accuracy(tdf, pdf_bool)
+                validation_accuracy = self.accuracy(data, prediction)
+
+                print('Epoch {}...'.format(epoch))
+                print('Accuracy on validation data: {}'.format(
+                    validation_accuracy))
+                print('Accuracy on training data: {}'.format(
+                    training_accuracy))
+                print('Cost value for training data: {}'.format(loss_value))
+                print()
+
+                training_accuracies.append(training_accuracy)
+                validation_accuracies.append(validation_accuracy)
+
+        return (training_accuracy, validation_accuracy, loss_values)
