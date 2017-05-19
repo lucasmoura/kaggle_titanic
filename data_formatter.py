@@ -24,6 +24,34 @@ def exclude_columns_from_data(dataframe, exclude_columns):
 
 def add_title_column(dataframe):
     dataframe['Title'] = dataframe.Name.str.extract(' (\w+)\.', expand=False)
+    dataframe['Title'] = dataframe.Title.replace(
+        ['Lady', 'Countess', 'Capt', 'Col', 'Don', 'Dr', 'Major', 'Rev', 'Sir',
+         'Jonkheer', 'Dona'], 'Rare')
+
+    dataframe['Title'] = dataframe.Title.replace('Mlle', 'Miss')
+    dataframe['Title'] = dataframe.Title.replace('Ms', 'Miss')
+    dataframe['Title'] = dataframe.Title.replace('Mme', 'Mrs')
+
+    title_mapping = {'Mr': 1, 'Miss': 2, 'Mrs': 3, 'Master': 4, 'Rare': 5}
+    dataframe['Title'] = dataframe['Title'].map(title_mapping)
+    dataframe['Title'] = dataframe['Title'].fillna(0)
+
+    return dataframe
+
+
+def add_isalone_column(dataframe):
+    dataframe['FamilySize'] = dataframe['SibSp'] + dataframe['Parch'] + 1
+    dataframe['IsAlone'] = 0
+
+    dataframe.loc[dataframe['FamilySize'] == 1, 'IsAlone'] = 1
+    dataframe = drop_columns(dataframe, ['FamilySize', 'SibSp', 'Parch'])
+
+    return dataframe
+
+
+def create_new_columns(dataframe):
+    dataframe = add_title_column(dataframe)
+    dataframe = add_isalone_column(dataframe)
     return dataframe
 
 
@@ -136,9 +164,14 @@ def fill_missing_embarked(dataframe, verbose=False):
     dataframe.Embarked = dataframe.Embarked.fillna(most_frequent_embarked)
 
 
+def fill_missing_fares(dataframe, verbose=False):
+    dataframe['Fare'].fillna(dataframe['Fare'].dropna().median(), inplace=True)
+
+
 def fill_missing_values(dataframe, verbose):
     fill_missing_ages(dataframe, verbose)
     fill_missing_embarked(dataframe, verbose)
+    fill_missing_fares(dataframe, verbose)
 
 
 def create_create_new_columns(dataframe):
@@ -204,7 +237,7 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
 
     fill_missing_values(combined_data, verbose)
     format_column_values(combined_data)
-    # combined_data = create_create_new_columns(combined_data)
+    combined_data = create_new_columns(combined_data)
     combined_data = exclude_columns_from_data(combined_data, exclude_columns)
 
     train_data, test_data = split_dataframe(combined_data, train_data_len)
