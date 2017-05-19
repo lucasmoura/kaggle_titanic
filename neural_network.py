@@ -119,7 +119,7 @@ class NeuralNetwork:
                              {a: nn_prediction, b: prediction})
 
     def sgd(self, *, train_data, batch_size, epochs, learning_rate,
-            validation_data):
+            lambda_value, validation_data):
         self.initialize_weights_and_biases()
         num_features = train_data[0][0].shape[0]
         x, y = self.create_placeholders(batch_size, num_features)
@@ -149,10 +149,11 @@ class NeuralNetwork:
                 data_batch, prediction_batch = self.unify_batch(batch)
 
                 output = self.feedforward(x)
-                loss = tf.reduce_mean(
-                    tf.nn.sigmoid_cross_entropy_with_logits(
-                        logits=output,
-                        labels=y))
+                loss = (tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+                    logits=output, labels=y)) +
+                    lambda_value * tf.nn.l2_loss(self.weights[0]) +
+                    lambda_value * tf.nn.l2_loss(self.weights[1]))
+
                 train_step = tf.train.GradientDescentOptimizer(
                     learning_rate).minimize(loss)
 

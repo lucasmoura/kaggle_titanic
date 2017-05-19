@@ -30,6 +30,7 @@ def main():
 
     network = nn.NeuralNetwork(layers, verbose=True)
     learning_rate = 6
+    lambda_value = 0.001
     legends.append(learning_rate)
 
     train_acc, val_acc, cost_values = network.sgd(
@@ -37,6 +38,7 @@ def main():
         batch_size=batch_size,
         epochs=epochs,
         learning_rate=learning_rate,
+        lambda_value=lambda_value,
         validation_data=validation_data)
     costs.append(cost_values)
 
