@@ -88,30 +88,26 @@ def format_embarked_column(dataframe):
     dataframe.loc[dataframe.Embarked == 'S', 'Embarked'] = 2
 
 
-def apply_feature_normalization(dataframe, column_name):
-    mean = dataframe[column_name].mean()
-    std = dataframe[column_name].std()
-
-    dataframe[column_name] = dataframe[column_name].apply(
-        lambda x: (x - mean) / std)
-
-
 def format_fare_column(dataframe):
-    """
-    The Fare column has the amount of money a passenger paid for a ticket. It
-    will be better to normalize such a feature, meaning that for every column
-    value, we will subtract the value from the mean and divide by the standard
-    deviation.
-    """
-    apply_feature_normalization(dataframe, 'Fare')
+    dataframe.loc[dataframe['Fare'] <= 7.91, 'Fare'] = 0
+    dataframe.loc[(dataframe['Fare'] > 7.91) & (dataframe['Fare'] <= 14.454),
+                  'Fare'] = 1
+    dataframe.loc[(dataframe['Fare'] > 14.454) & (dataframe['Fare'] <= 31),
+                  'Fare'] = 2
+    dataframe.loc[dataframe['Fare'] > 31, 'Fare'] = 3
+
+    dataframe['Fare'] = dataframe['Fare'].astype(int)
 
 
 def format_age_column(dataframe):
-    """
-    The Age column has the real age values of the passengers. We will apply the
-    same feature normalization as the one applied for the Fare column.
-    """
-    apply_feature_normalization(dataframe, 'Age')
+    dataframe.loc[dataframe['Age'] <= 16, 'Age'] = 1
+    dataframe.loc[(dataframe['Age'] > 16) & (dataframe['Age'] <= 32),
+                  'Age'] = 2
+    dataframe.loc[(dataframe['Age'] > 32) & (dataframe['Age'] <= 48),
+                  'Age'] = 3
+    dataframe.loc[(dataframe['Age'] > 48) & (dataframe['Age'] <= 64),
+                  'Age'] = 4
+    dataframe.loc[dataframe['Age'] > 64, 'Age'] = 5
 
 
 def format_column_values(dataframe):
