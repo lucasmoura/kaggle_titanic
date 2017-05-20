@@ -53,15 +53,15 @@ def main():
         test_data = df.load_data(SAVED_TEST)
         validation_data = df.load_data(SAVED_VALIDATION)
 
-    layers = [7, 6, 1]
+    layers = [8, 5, 1]
     epochs = 50
-    batch_size = 200
+    batch_size = 300
     legends = []
     costs = []
 
     network = nn.NeuralNetwork(layers, verbose=True)
-    learning_rate = 8
-    lambda_value = 0.001
+    learning_rate = 0.5
+    lambda_value = 0.05
     legends.append(learning_rate)
 
     train_acc, val_acc, cost_values = network.sgd(

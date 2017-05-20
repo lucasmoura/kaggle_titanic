@@ -51,9 +51,15 @@ def add_isalone_column(dataframe):
     return dataframe
 
 
+def add_ageclass_column(dataframe):
+    dataframe['AgeClass'] = dataframe['Age'] * dataframe['Pclass']
+    return dataframe
+
+
 def create_new_columns(dataframe):
     dataframe = add_title_column(dataframe)
     dataframe = add_isalone_column(dataframe)
+    dataframe = add_ageclass_column(dataframe)
     return dataframe
 
 
