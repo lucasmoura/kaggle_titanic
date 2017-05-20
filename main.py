@@ -1,3 +1,5 @@
+import os
+
 import data_formatter as df
 import neural_network as nn
 import graphics as graph
@@ -7,8 +9,12 @@ DATA_PATH = 'data/'
 TRAIN_FILE = 'train.csv'
 TEST_FILE = 'test.csv'
 
+SAVED_TRAIN = 'train.data'
+SAVED_VALIDATION = 'validation.data'
+SAVED_TEST = 'test.data'
 
-def main():
+
+def create_data():
     train_path = DATA_PATH + TRAIN_FILE
     test_path = DATA_PATH + TEST_FILE
 
@@ -20,16 +26,41 @@ def main():
     train_data = df.format_training_data(train_data)
     print('Creating validation data...')
     train_data, validation_data = df.create_validation_data(
-        train_data, verbose=True)
+        train_data, verbose=False)
 
-    layers = [7, 5, 1]
-    epochs = 30
+    return train_data, validation_data, test_data
+
+
+def check_paths():
+    train_saved = os.path.exists(SAVED_TRAIN)
+    test_saved = os.path.exists(SAVED_TEST)
+    validation_saved = os.path.exists(SAVED_VALIDATION)
+
+    return train_saved and test_saved and validation_saved
+
+
+def main():
+
+    if not check_paths():
+        print('Creating data...')
+        train_data, validation_data, test_data = create_data()
+        df.save_data(train_data, SAVED_TRAIN)
+        df.save_data(test_data, SAVED_TEST)
+        df.save_data(validation_data, SAVED_VALIDATION)
+    else:
+        print('Loading data...')
+        train_data = df.load_data(SAVED_TRAIN)
+        test_data = df.load_data(SAVED_TEST)
+        validation_data = df.load_data(SAVED_VALIDATION)
+
+    layers = [7, 6, 1]
+    epochs = 50
     batch_size = 200
     legends = []
     costs = []
 
     network = nn.NeuralNetwork(layers, verbose=True)
-    learning_rate = 6
+    learning_rate = 8
     lambda_value = 0.001
     legends.append(learning_rate)
 

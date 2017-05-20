@@ -1,5 +1,7 @@
-import random
 import pandas
+import pickle
+import random
+
 import numpy as np
 
 
@@ -286,3 +288,13 @@ def create_validation_data(train_data, size=0.2, verbose=False):
             len(validation_data)))
 
     return (train_data, validation_data)
+
+
+def save_data(data, file_name):
+    with open(file_name, 'wb') as data_file:
+        pickle.dump(data, data_file)
+
+
+def load_data(data_path):
+    with open(data_path, 'rb') as data_file:
+        return pickle.load(data_file)
