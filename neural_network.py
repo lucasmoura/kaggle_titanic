@@ -97,17 +97,19 @@ class NeuralNetwork:
 
     def feedforward(self, input_data):
         a0 = input_data
-        z1 = tf.matmul(tf.transpose(self.weights[0]), a0)
-        a1 = tf.sigmoid(z1)
+        z1 = tf.add(tf.matmul(tf.transpose(self.weights[0]), a0),
+                    self.biases[0])
+        a1 = tf.nn.sigmoid(z1)
 
-        z2 = tf.matmul(tf.transpose(self.weights[1]), a1)
-        a2 = tf.sigmoid(z2)
+        z2 = tf.add(tf.matmul(tf.transpose(self.weights[1]), a1),
+                    self.biases[1])
+        output = tf.transpose(z2)
 
-        return tf.transpose(a2)
+        return output
 
     def accuracy(self, data, prediction):
         x = tf.placeholder(tf.float32)
-        result = self.feedforward(x)
+        result = tf.sigmoid(self.feedforward(x))
 
         nn_prediction = self.sess.run(result, {x: data})
         nn_prediction = nn_prediction >= 0.5
@@ -120,13 +122,16 @@ class NeuralNetwork:
 
     def sgd(self, *, train_data, batch_size, epochs, learning_rate,
             lambda_value, validation_data):
-        self.initialize_weights_and_biases()
         num_features = train_data[0][0].shape[0]
         x, y = self.create_placeholders(batch_size, num_features)
 
         training_accuracies, validation_accuracies = [], []
         loss_values = []
         tdf, pdf = self.unify_batch(train_data)
+
+        best_validation = -1
+        count_validation = 0
+        epoch = 1
 
         if validation_data:
             data, prediction = self.unify_batch(validation_data)
@@ -138,24 +143,23 @@ class NeuralNetwork:
             print('Num training_data: {}'.format(len(train_data)))
             print('Num epochs: {}'.format(epochs))
             print('Batch size: {}'.format(batch_size))
-            print('\nDisplaying biases and weights before sgd...')
-            self.print_biases()
-            self.print_weights()
 
-        for epoch in range(epochs):
+        output = self.feedforward(x)
+
+        loss = (tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=output, labels=y)) +
+            lambda_value * tf.nn.l2_loss(self.weights[0]) +
+            lambda_value * tf.nn.l2_loss(self.weights[1]))
+
+        train_step = tf.train.GradientDescentOptimizer(
+            learning_rate).minimize(loss)
+        self.initialize_weights_and_biases()
+
+        while(True):
             batches = self.create_batches(train_data, batch_size)
 
             for batch in batches:
                 data_batch, prediction_batch = self.unify_batch(batch)
-
-                output = self.feedforward(x)
-                loss = (tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-                    logits=output, labels=y)) +
-                    lambda_value * tf.nn.l2_loss(self.weights[0]) +
-                    lambda_value * tf.nn.l2_loss(self.weights[1]))
-
-                train_step = tf.train.GradientDescentOptimizer(
-                    learning_rate).minimize(loss)
 
                 self.sess.run(
                     train_step,
@@ -168,7 +172,16 @@ class NeuralNetwork:
                 training_accuracy = self.accuracy(tdf, pdf_bool)
                 validation_accuracy = self.accuracy(data, prediction)
 
+                if validation_accuracy > best_validation:
+                    best_validation = validation_accuracy
+                    count_validation = 0
+                else:
+                    count_validation += 1
+
                 print('Epoch {}...'.format(epoch))
+                print('Learning rate: {}'.format(learning_rate))
+                print('Count for decrese learning rate: {}'.format(
+                    count_validation))
                 print('Accuracy on validation data: {}'.format(
                     validation_accuracy))
                 print('Accuracy on training data: {}'.format(
@@ -178,5 +191,9 @@ class NeuralNetwork:
 
                 training_accuracies.append(training_accuracy)
                 validation_accuracies.append(validation_accuracy)
+                epoch += 1
 
+                if count_validation == 20:
+                    break
+        print('Best achieved accuracy: {}'.format(best_validation))
         return (training_accuracy, validation_accuracy, loss_values)
