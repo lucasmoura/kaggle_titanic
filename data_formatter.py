@@ -269,7 +269,7 @@ def format_training_data(train_data):
     return list(zip(train_data, y))
 
 
-def create_validation_data(train_data, size=0.2, verbose=False):
+def create_validation_data(train_data, size=0.1, verbose=False):
     """
     This method will split the train data into train and validation data based
     on the parameter size, which should the proportion of training data that
