@@ -255,6 +255,13 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     return train_data, test_data
 
 
+def create_data_array(data):
+    data = drop_columns(data, ['Survived']).as_matrix()
+    num_features = data.shape[1]
+
+    return [np.reshape(x, (num_features, 1)) for x in data]
+
+
 def format_training_data(train_data):
     """
     This method will be used to format the training data. Every passenger data
@@ -266,10 +273,7 @@ def format_training_data(train_data):
     survived or not.
     """
     y = train_data.Survived.as_matrix()
-    train_data = drop_columns(train_data, ['Survived']).as_matrix()
-    num_features = train_data.shape[1]
-
-    train_data = [np.reshape(x, (num_features, 1)) for x in train_data]
+    train_data = create_data_array(train_data)
     y = [np.array(pred).reshape((1, 1)) for pred in y]
 
     return list(zip(train_data, y))
