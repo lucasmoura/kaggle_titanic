@@ -262,7 +262,7 @@ def create_data_array(data):
     return [np.reshape(x, (num_features, 1)) for x in data]
 
 
-def format_training_data(train_data):
+def format_training_data(train_data, single=False):
     """
     This method will be used to format the training data. Every passenger data
     will be formatted to the following pattern:
@@ -272,11 +272,29 @@ def format_training_data(train_data):
     where x will be the passenger's features and y will if that passsenger
     survived or not.
     """
-    y = train_data.Survived.as_matrix()
+    survived = train_data.Survived.as_matrix().astype(int)
+
+    if single:
+        y = create_single_output(survived)
+    else:
+        y = create_two_output(survived)
+
     train_data = create_data_array(train_data)
-    y = [np.array(pred).reshape((1, 1)) for pred in y]
 
     return list(zip(train_data, y))
+
+
+def create_single_output(output):
+    return [np.array(pred).reshape((1, 1)) for pred in output]
+
+
+def create_two_output(output):
+    y = np.zeros((output.shape[0], 2))
+
+    for index, value in enumerate(output.tolist()):
+        y[index][value] = 1
+
+    return y.astype(int)
 
 
 def create_validation_data(train_data, size=0.1, verbose=False):
