@@ -77,8 +77,8 @@ class NeuralNetwork:
 
         loss_regularized = tf.add(loss, regularizer)
 
-        train_step = tf.train.MomentumOptimizer(
-            learning_rate, 0).minimize(loss_regularized)
+        train_step = tf.train.AdagradOptimizer(
+            learning_rate).minimize(loss_regularized)
 
         init = tf.global_variables_initializer()
         self.sess.run(init)
