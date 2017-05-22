@@ -10,7 +10,16 @@ def create_batches(data, batch_size):
     return batches
 
 
-def unify_batch(batch):
+def unify_data(data):
+    unified_data = data[0]
+
+    for d in data[1:]:
+        unified_data = np.concatenate((unified_data, d), axis=1)
+
+    return unified_data
+
+
+def unify_batch(batch, use_prediction=True):
     data_batch, prediction_batch = batch[0]
 
     for data, prediction in batch[1:]:
@@ -18,4 +27,4 @@ def unify_batch(batch):
         prediction_batch = np.concatenate(
             (prediction_batch, prediction), axis=1)
 
-    return(data_batch, prediction_batch.T)
+    return (data_batch, prediction_batch.T)

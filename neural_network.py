@@ -1,5 +1,5 @@
 import utils
-
+import numpy as np
 import tensorflow as tf
 
 from math import sqrt
@@ -26,10 +26,17 @@ class NeuralNetwork:
 
     def init_biases(self, layers):
         self.biases = []
+        input_layer = layers[0]
 
         for index, layer in enumerate(layers[1:]):
-            bias = tf.Variable(0.0, name='b{}'.format(index))
+            bias = tf.Variable(
+                tf.random_normal(
+                    shape=[layer, 1],
+                    mean=0,
+                    stddev=(1 / sqrt(input_layer))),
+                name='b{}'.format(index))
             self.biases.append(bias)
+            input_layer = layer
 
     def init_weights(self, layers):
         self.weights = []
@@ -61,18 +68,21 @@ class NeuralNetwork:
 
     def initialize_computing_graph(self, x, y, learning_rate, lambda_value):
         output = self.feedforward(x)
-        loss = (tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-            logits=output, labels=y)) +
-            lambda_value * tf.nn.l2_loss(self.weights[0]) +
-            lambda_value * tf.nn.l2_loss(self.weights[1]))
+        regularizer = tf.nn.l2_loss(self.weights[0]) + tf.nn.l2_loss(
+            self.weights[1])
+        regularizer = lambda_value * regularizer
+        loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
+            logits=output, labels=y))
 
-        train_step = tf.train.GradientDescentOptimizer(
-            learning_rate).minimize(loss)
+        loss_regularized = tf.add(loss, regularizer)
+
+        train_step = tf.train.MomentumOptimizer(
+            learning_rate, 0).minimize(loss_regularized)
 
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
-        return (loss, train_step)
+        return (loss_regularized, train_step)
 
     def feedforward(self, input_data):
         a0 = input_data
@@ -84,12 +94,20 @@ class NeuralNetwork:
                     self.biases[1])
         return tf.transpose(z2)
 
+    def predict(self, input_data):
+        x = tf.placeholder(tf.float32)
+        output = tf.nn.softmax(self.feedforward(x))
+
+        output = self.sess.run(tf.argmax(output, 1),
+                               {x: input_data})
+
+        return output.astype(int)
+
     def accuracy(self, data, prediction):
         x = tf.placeholder(tf.float32)
-        result = tf.sigmoid(self.feedforward(x))
+        result = tf.argmax(tf.nn.softmax(self.feedforward(x)), 1)
 
         nn_prediction = self.sess.run(result, {x: data})
-        nn_prediction = nn_prediction >= 0.5
 
         a = tf.placeholder(tf.bool)
         b = tf.placeholder(tf.bool)
@@ -110,10 +128,10 @@ class NeuralNetwork:
 
         if validation_data:
             data, prediction = utils.unify_batch(validation_data)
-            prediction = prediction == 1
+            prediction = np.argmax(prediction, 1)
 
             tdf, pdf = utils.unify_batch(train_data)
-            pdf_bool = pdf == 1
+            pdf_bool = np.argmax(pdf, 1)
 
         if self.verbose:
             print('Stochastic gradient descent will be performed with:')
@@ -162,7 +180,7 @@ class NeuralNetwork:
                 validation_accuracies.append(validation_accuracy)
                 epoch += 1
 
-                if count_validation == 10:
+                if count_validation == 20:
                     break
 
         print('Best achieved accuracy: {}'.format(best_validation))

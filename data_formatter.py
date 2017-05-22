@@ -294,7 +294,8 @@ def create_two_output(output):
     for index, value in enumerate(output.tolist()):
         y[index][value] = 1
 
-    return y.astype(int)
+    y = y.astype(int)
+    return [np.reshape(x, (2, 1)) for x in y]
 
 
 def create_validation_data(train_data, size=0.1, verbose=False):
