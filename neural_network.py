@@ -1,3 +1,4 @@
+import random
 import utils
 import numpy as np
 import tensorflow as tf
@@ -115,6 +116,16 @@ class NeuralNetwork:
         return self.sess.run(accuracy_metric,
                              {a: nn_prediction, b: prediction})
 
+    def prepare_batches(self, train_data, batch_size):
+        train_batches = utils.create_batches(train_data, batch_size)
+        batches = []
+
+        for batch in train_batches:
+            data_batch, prediction_batch = utils.unify_batch(batch)
+            batches.append((data_batch, prediction_batch))
+
+        return batches
+
     def sgd(self, *, train_data, batch_size, epochs, learning_rate,
             lambda_value, validation_data):
         x = tf.placeholder(tf.float32)
@@ -142,11 +153,12 @@ class NeuralNetwork:
         loss, train_step = self.initialize_computing_graph(
             x, y, learning_rate, lambda_value)
 
-        while(True):
-            batches = utils.create_batches(train_data, batch_size)
+        batches = self.prepare_batches(train_data, batch_size)
 
+        while(True):
+            random.shuffle(batches)
             for batch in batches:
-                data_batch, prediction_batch = utils.unify_batch(batch)
+                data_batch, prediction_batch = batch
 
                 self.sess.run(
                     train_step,
