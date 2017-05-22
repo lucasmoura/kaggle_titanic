@@ -206,6 +206,13 @@ def print_data_information(dataframe, name):
     print()
 
 
+def apply_feature_normalization(dataframe):
+    for feature in dataframe.columns.values:
+        dataframe[feature] = ((dataframe[feature] - dataframe[feature].mean()) / # noqa
+                              dataframe[feature].std())
+
+    return dataframe
+
 def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     """
     Every row on training data:
@@ -243,6 +250,7 @@ def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     format_column_values(combined_data)
     combined_data = create_new_columns(combined_data)
     combined_data = exclude_columns_from_data(combined_data, exclude_columns)
+    combined_data = apply_feature_normalization(combined_data)
 
     train_data, test_data = split_dataframe(combined_data, train_data_len)
     train_data = drop_columns(train_data, ['PassengerId'])
