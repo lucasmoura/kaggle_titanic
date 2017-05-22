@@ -1,7 +1,6 @@
-import random
+import utils
 
 import tensorflow as tf
-import numpy as np
 
 from math import sqrt
 
@@ -27,17 +26,10 @@ class NeuralNetwork:
 
     def init_biases(self, layers):
         self.biases = []
-        input_layer = layers[0]
 
         for index, layer in enumerate(layers[1:]):
-            bias = tf.Variable(
-                tf.random_normal(
-                    shape=[layer, 1],
-                    mean=0,
-                    stddev=(1 / sqrt(input_layer))),
-                name='b{}'.format(index))
+            bias = tf.Variable(0.0, name='b{}'.format(index))
             self.biases.append(bias)
-            input_layer = layer
 
     def init_weights(self, layers):
         self.weights = []
@@ -79,22 +71,6 @@ class NeuralNetwork:
 
         return (x, y)
 
-    def create_batches(self, train_data, batch_size):
-        random.shuffle(train_data)
-        batches = [train_data[offset:offset+batch_size]
-                   for offset in range(0, len(train_data), batch_size)]
-        return batches
-
-    def unify_batch(self, batch):
-        data_batch, prediction_batch = batch[0]
-
-        for data, prediction in batch[1:]:
-            data_batch = np.concatenate((data_batch, data), axis=1)
-            prediction_batch = np.concatenate(
-                (prediction_batch, prediction), axis=1)
-
-        return(data_batch, prediction_batch.T)
-
     def feedforward(self, input_data):
         a0 = input_data
         z1 = tf.add(tf.matmul(tf.transpose(self.weights[0]), a0),
@@ -103,9 +79,7 @@ class NeuralNetwork:
 
         z2 = tf.add(tf.matmul(tf.transpose(self.weights[1]), a1),
                     self.biases[1])
-        output = tf.transpose(z2)
-
-        return output
+        return tf.transpose(z2)
 
     def accuracy(self, data, prediction):
         x = tf.placeholder(tf.float32)
@@ -127,14 +101,14 @@ class NeuralNetwork:
 
         training_accuracies, validation_accuracies = [], []
         loss_values = []
-        tdf, pdf = self.unify_batch(train_data)
+        tdf, pdf = utils.unify_batch(train_data)
 
         best_validation = -1
         count_validation = 0
         epoch = 1
 
         if validation_data:
-            data, prediction = self.unify_batch(validation_data)
+            data, prediction = utils.unify_batch(validation_data)
             prediction = prediction == 1
             pdf_bool = pdf == 1
 
@@ -145,7 +119,6 @@ class NeuralNetwork:
             print('Batch size: {}'.format(batch_size))
 
         output = self.feedforward(x)
-
         loss = (tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
             logits=output, labels=y)) +
             lambda_value * tf.nn.l2_loss(self.weights[0]) +
@@ -156,10 +129,10 @@ class NeuralNetwork:
         self.initialize_weights_and_biases()
 
         while(True):
-            batches = self.create_batches(train_data, batch_size)
+            batches = utils.create_batches(train_data, batch_size)
 
             for batch in batches:
-                data_batch, prediction_batch = self.unify_batch(batch)
+                data_batch, prediction_batch = utils.unify_batch(batch)
 
                 self.sess.run(
                     train_step,
@@ -193,7 +166,8 @@ class NeuralNetwork:
                 validation_accuracies.append(validation_accuracy)
                 epoch += 1
 
-                if count_validation == 20:
+                if count_validation == 10:
                     break
+
         print('Best achieved accuracy: {}'.format(best_validation))
         return (training_accuracy, validation_accuracy, loss_values)
