@@ -59,17 +59,20 @@ class NeuralNetwork:
                 self.sess.run(weight)))
         print()
 
-    def initialize_weights_and_biases(self):
+    def initialize_computing_graph(self, x, y, learning_rate, lambda_value):
+        output = self.feedforward(x)
+        loss = (tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
+            logits=output, labels=y)) +
+            lambda_value * tf.nn.l2_loss(self.weights[0]) +
+            lambda_value * tf.nn.l2_loss(self.weights[1]))
+
+        train_step = tf.train.GradientDescentOptimizer(
+            learning_rate).minimize(loss)
+
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
-    def create_placeholders(self, batch_size, num_features):
-        x = tf.placeholder(
-            tf.float32, shape=None)
-        y = tf.placeholder(
-            tf.float32, shape=None)
-
-        return (x, y)
+        return (loss, train_step)
 
     def feedforward(self, input_data):
         a0 = input_data
@@ -96,12 +99,10 @@ class NeuralNetwork:
 
     def sgd(self, *, train_data, batch_size, epochs, learning_rate,
             lambda_value, validation_data):
-        num_features = train_data[0][0].shape[0]
-        x, y = self.create_placeholders(batch_size, num_features)
-
+        x = tf.placeholder(tf.float32)
+        y = tf.placeholder(tf.float32)
         training_accuracies, validation_accuracies = [], []
         loss_values = []
-        tdf, pdf = utils.unify_batch(train_data)
 
         best_validation = -1
         count_validation = 0
@@ -110,6 +111,8 @@ class NeuralNetwork:
         if validation_data:
             data, prediction = utils.unify_batch(validation_data)
             prediction = prediction == 1
+
+            tdf, pdf = utils.unify_batch(train_data)
             pdf_bool = pdf == 1
 
         if self.verbose:
@@ -118,15 +121,8 @@ class NeuralNetwork:
             print('Num epochs: {}'.format(epochs))
             print('Batch size: {}'.format(batch_size))
 
-        output = self.feedforward(x)
-        loss = (tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(
-            logits=output, labels=y)) +
-            lambda_value * tf.nn.l2_loss(self.weights[0]) +
-            lambda_value * tf.nn.l2_loss(self.weights[1]))
-
-        train_step = tf.train.GradientDescentOptimizer(
-            learning_rate).minimize(loss)
-        self.initialize_weights_and_biases()
+        loss, train_step = self.initialize_computing_graph(
+            x, y, learning_rate, lambda_value)
 
         while(True):
             batches = utils.create_batches(train_data, batch_size)
