@@ -1,9 +1,9 @@
 import os
 
+import utils
 import data_formatter as df
 import neural_network as nn
 import graphics as graph
-
 
 DATA_PATH = 'data/'
 TRAIN_FILE = 'train.csv'
@@ -39,8 +39,28 @@ def check_paths():
     return train_saved and test_saved and validation_saved
 
 
-def main():
+def prepare_submission(neural_network, test_data):
+    passengerId = test_data['PassengerId'].as_matrix()
+    test_data = df.drop_columns(test_data, ['PassengerId'])
+    test_data = df.create_data_array(test_data)
+    test_data = utils.unify_data(test_data)
+    prediction = neural_network.predict(test_data)
 
+    passengerId = passengerId.tolist()
+    prediction = prediction.tolist()
+
+    with open('submission.csv', 'w') as submission:
+        submission.write('PassengerId,Survived\n')
+        for passenger_id, pred in zip(passengerId, prediction):
+            output = '{},{}'
+
+            if passenger_id != passengerId[-1]:
+                output += '\n'
+
+            submission.write(output.format(passenger_id, pred))
+
+
+def main():
     if not check_paths():
         print('Creating data...')
         train_data, validation_data, test_data = create_data()
@@ -53,15 +73,15 @@ def main():
         test_data = df.load_data(SAVED_TEST)
         validation_data = df.load_data(SAVED_VALIDATION)
 
-    layers = [8, 5, 1]
+    layers = [8, 5, 2]
     epochs = 50
-    batch_size = 300
+    batch_size = len(train_data)
+    lambda_value = 0.05
     legends = []
     costs = []
 
     network = nn.NeuralNetwork(layers, verbose=True)
-    learning_rate = 0.5
-    lambda_value = 0.05
+    learning_rate = 1
     legends.append(learning_rate)
 
     train_acc, val_acc, cost_values = network.sgd(
@@ -72,6 +92,8 @@ def main():
         lambda_value=lambda_value,
         validation_data=validation_data)
     costs.append(cost_values)
+
+    prepare_submission(network, test_data)
 
     graph.display_cost_graph(costs, legends)
 
