@@ -154,6 +154,7 @@ class NeuralNetwork:
             x, y, learning_rate, lambda_value)
 
         batches = self.prepare_batches(train_data, batch_size)
+        saver = tf.train.Saver()
 
         while(True):
             random.shuffle(batches)
@@ -174,6 +175,7 @@ class NeuralNetwork:
                 if validation_accuracy > best_validation:
                     best_validation = validation_accuracy
                     count_validation = 0
+                    saver_path = saver.save(self.sess, '/tmp/model.ckpt')
                 else:
                     count_validation += 1
 
@@ -196,4 +198,5 @@ class NeuralNetwork:
                     break
 
         print('Best achieved accuracy: {}'.format(best_validation))
+        saver.restore(self.sess, saver_path)
         return (training_accuracy, validation_accuracy, loss_values)
