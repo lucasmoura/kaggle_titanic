@@ -69,21 +69,16 @@ class NeuralNetwork:
 
     def initialize_computing_graph(self, x, y, learning_rate, lambda_value):
         output = self.feedforward(x)
-        regularizer = tf.nn.l2_loss(self.weights[0]) + tf.nn.l2_loss(
-            self.weights[1])
-        regularizer = lambda_value * regularizer
         loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits(
             logits=output, labels=y))
 
-        loss_regularized = tf.add(loss, regularizer)
-
         train_step = tf.train.AdagradOptimizer(
-            learning_rate).minimize(loss_regularized)
+            learning_rate).minimize(loss)
 
         init = tf.global_variables_initializer()
         self.sess.run(init)
 
-        return (loss_regularized, train_step)
+        return (loss, train_step)
 
     def feedforward(self, input_data):
         a0 = input_data
@@ -194,7 +189,7 @@ class NeuralNetwork:
                 validation_accuracies.append(validation_accuracy)
                 epoch += 1
 
-                if count_validation == 20:
+                if count_validation == 10:
                     break
 
         print('Best achieved accuracy: {}'.format(best_validation))

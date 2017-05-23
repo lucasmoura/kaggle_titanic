@@ -26,7 +26,7 @@ def create_data():
     train_data = df.format_training_data(train_data)
     print('Creating validation data...')
     train_data, validation_data = df.create_validation_data(
-        train_data, verbose=False)
+        train_data, size=0.1, verbose=False)
 
     return train_data, validation_data, test_data
 
@@ -73,7 +73,7 @@ def main():
         test_data = df.load_data(SAVED_TEST)
         validation_data = df.load_data(SAVED_VALIDATION)
 
-    layers = [8, 12, 2]
+    layers = [8, 14, 2]
     epochs = 50
     batch_size = 32
     lambda_value = 0
@@ -81,7 +81,7 @@ def main():
     costs = []
 
     network = nn.NeuralNetwork(layers, verbose=True)
-    learning_rate = 0.15
+    learning_rate = 0.1
     legends.append(learning_rate)
 
     train_acc, val_acc, cost_values = network.sgd(
