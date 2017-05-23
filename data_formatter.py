@@ -208,10 +208,14 @@ def print_data_information(dataframe, name):
 
 def apply_feature_normalization(dataframe):
     for feature in dataframe.columns.values:
+        if feature == 'PassengerId':
+            continue
+
         dataframe[feature] = ((dataframe[feature] - dataframe[feature].mean()) / # noqa
                               dataframe[feature].std())
 
     return dataframe
+
 
 def format_data(train_path, test_path, exclude_columns=None, verbose=False):
     """
